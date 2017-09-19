@@ -145,13 +145,6 @@ let findAnswers2 goal inputs =
     |> Seq.distinct
 
 
-
-let buildBalancedTree (opers:list<expr * expr -> expr>) (constants:list<expr>) =
-    opers.[2](opers.[0](constants.[0], constants.[1]),opers.[1](constants.[2], constants.[3]))
-
-
-
-
 let Solve (a,b,c,d) =
     findAnswers 24.0 [a;b;c;d]
          
