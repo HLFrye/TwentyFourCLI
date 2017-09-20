@@ -1,27 +1,4 @@
-﻿type expr = 
-| Constant of int
-| Sum of expr * expr
-| Diff of expr * expr
-| Prod of expr * expr
-| Quot of expr * expr
-| Power of expr * expr
-
-let reverseDiff (x, y) = Diff (y, x)
-let reverseQuot (x, y) = Quot (y, x)
-let reversePow (x, y) = Power (y, x)
-
-let operators = [Sum; Diff; Prod; Quot; Power; reverseDiff; reverseQuot; reversePow]
-
-let rec calculateExpression expr =
-    match expr with
-    | Constant x -> float x 
-    | Sum (x, y) -> (calculateExpression x) + (calculateExpression y)
-    | Diff (x, y) -> (calculateExpression x) - (calculateExpression y)
-    | Prod (x, y) -> (calculateExpression x) * (calculateExpression y)
-    | Quot (x, y) -> (calculateExpression x) / (calculateExpression y)
-    | Power (x, y) -> System.Math.Pow((calculateExpression x), (calculateExpression y))
-    
-let split choices = 
+﻿let split choices = 
     let indexed = Seq.indexed choices
     indexed 
     |> Seq.map (fun (idx, choice) -> 
@@ -38,7 +15,6 @@ let getNext (accumulation, choices) =
         |> Seq.singleton
         |> Seq.append accumulation, nextChoices))
        
-
 let rec permutations values =
     values
     |> Seq.map (fun (curr, choices) ->
@@ -50,53 +26,40 @@ let rec permutations values =
             |> permutations)
     |> Seq.concat
 
+type expr = 
+| Constant of int
+| Sum of expr * expr
+| Diff of expr * expr
+| Prod of expr * expr
+| Quot of expr * expr
+| Power of expr * expr
+
+let operators = [Sum; Diff; Prod; Quot; Power]
+
+let rec calculateExpression expr =
+    match expr with
+    | Constant x -> float x 
+    | Sum (x, y) -> (calculateExpression x) + (calculateExpression y)
+    | Diff (x, y) -> (calculateExpression x) - (calculateExpression y)
+    | Prod (x, y) -> (calculateExpression x) * (calculateExpression y)
+    | Quot (x, y) -> (calculateExpression x) / (calculateExpression y)
+    | Power (x, y) -> (calculateExpression x) ** (calculateExpression y)
+
+let rec formatExpression expr =
+    match expr with
+    | Constant x -> sprintf "%d" x
+    | Sum (x, y) -> sprintf "(%s + %s)" (formatExpression x) (formatExpression y)
+    | Diff (x, y) -> sprintf "(%s - %s)" (formatExpression x) (formatExpression y)
+    | Prod (x, y) -> sprintf "(%s * %s)" (formatExpression x) (formatExpression y)
+    | Quot (x, y) -> sprintf "(%s / %s)" (formatExpression x) (formatExpression y)
+    | Power (x, y) -> sprintf "(%s ^ %s)" (formatExpression x) (formatExpression y)
+    
 let constants digits =
     digits 
     |> Seq.map Constant
 
 let tuple first second = 
     first, second
-
-let applyOperator combiner input operator =
-    let firstExpr = input |> Seq.item 0 
-    let secondExpr = input |> Seq.item 1
-    let newExpr = operator (firstExpr, secondExpr)
-    newExpr
-    |> Seq.singleton
-    |> combiner (input |> Seq.skip 2)
-
-let applyOperatorBack = applyOperator Seq.append
-let applyOperatorFront = applyOperator (fun x y -> Seq.append y x) 
-
-let rec subExpressions (input:seq<expr>):seq<expr> =
-    let applyAllOperators applyFn operators = 
-        operators
-        |> Seq.map (applyFn input)
-        |> Seq.map subExpressions
-        |> Seq.concat
-
-    match Seq.length input with
-    | 1 -> input 
-    | _ -> operators
-           |> applyAllOperators applyOperatorBack
-           |> Seq.append (applyAllOperators applyOperatorFront operators)
-
-let rec expressions (inputs:seq<seq<expr>>):seq<expr> =
-    inputs
-    |> Seq.map subExpressions
-    |> Seq.concat
-    
-let findAnswers goal inputs =
-    inputs
-    |> tuple Seq.empty<int>
-    |> Seq.singleton 
-    |> permutations 
-    |> Seq.map constants
-    |> expressions
-    |> Seq.map (fun expr -> expr, (calculateExpression expr))
-    |> Seq.filter (fun (_, x) -> x = goal)
-    |> Seq.map (fun (x, _) -> x)
-    |> Seq.distinct
 
 let buildAllExpressions expressions =
     seq { for expr1 in expressions do
@@ -115,8 +78,7 @@ let buildAllTrees (opers:list<expr * expr -> expr>) (constants:list<expr>) =
 
     [tree1;tree2;tree3;tree4;tree5]
 
-
-let findAnswers2 goal inputs =
+let findAnswers goal inputs =
     let allConstants = 
         inputs
         |> tuple Seq.empty<int>
@@ -144,7 +106,17 @@ let findAnswers2 goal inputs =
     |> Seq.map (fun (x, _) -> x)
     |> Seq.distinct
 
-
 let Solve (a,b,c,d) =
     findAnswers 24.0 [a;b;c;d]
          
+[<EntryPoint>]
+let main argv =
+    let num1 = int argv.[0]
+    let num2 = int argv.[1]
+    let num3 = int argv.[2]
+    let num4 = int argv.[3]
+    let results = Solve (num1,num2,num3,num4)
+    printf "Found %d answers\n" (Seq.length results)
+    for answer in results do
+        printf "%s\n" (formatExpression answer)
+    1
